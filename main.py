@@ -5,7 +5,7 @@ from utils import *
 # (BOP) is the algorithm I picked one in a tutorial might not be the right one for our usecase
 solver = pywraplp.Solver.CreateSolver('BOP')
 if not solver:
-    exit()
+    exit(1)
 
 # Input
 p = [10, 5, 4]
