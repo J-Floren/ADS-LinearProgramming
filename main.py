@@ -7,10 +7,12 @@ if not solver:
     exit()
 
 # Input
-p = [10, 5, 4]
-c = [9, 1, 12]
+p = [5, 4, 2, 2]
+c = [6, 4, 10]
 n = len(p)
 m = len(c)
+
+c_max = get_max(c)
 
 # Variable
 x = bool_array_gen(solver, n, m)
@@ -23,7 +25,7 @@ for i in range(n):
     solver.Add(solver.Sum(x[i][j] for j in range(m)) == 1)
 
 # Objective
-solver.Minimize(solver.Sum(x[i][j] * p[i] * j for j in range(m) for i in range(n)))
+solver.Minimize(solver.Sum(x[i][j] * p[i] * (j * j) for j in range(m) for i in range(n)))
 
 
 # Output
