@@ -2,6 +2,7 @@ from ortools.linear_solver import pywraplp
 from utils import *
 
 # LP solver
+# (BOP) is the algorithm I picked one in a tutorial might not be the right one for our usecase
 solver = pywraplp.Solver.CreateSolver('BOP')
 if not solver:
     exit()
