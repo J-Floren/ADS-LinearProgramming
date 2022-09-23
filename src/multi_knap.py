@@ -64,8 +64,8 @@ def solve(input: Input) -> Output:
   (pictures, blackouts) = input
   num_pictures = len(pictures)
 
-  if not blackouts:
-    print("No blackouts => Trivial solution")
+  if not pictures or not blackouts:
+    print("Trivial solution")
     return ([pictures], sum(pictures))
 
   knapsacks = get_knapsacks(blackouts)
