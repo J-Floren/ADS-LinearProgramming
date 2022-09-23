@@ -39,6 +39,8 @@ from typing import NoReturn
 # [[3], [2, 1], [2, 4]]
 # 18
 
+# Based on: https://developers.google.com/optimization/bin/multiple_knapsack
+
 def fail_with(message: str) -> NoReturn:
   print(message)
   exit(1)
@@ -95,7 +97,7 @@ def solve(input: Input) -> Output:
 
   # Compute list of pictures, grouped by their knapsack
   knaps = [[pictures[p] for p in range(num_pictures) if x[p][k].solution_value()] for k in range(num_knapsacks)]
-  leftover = [pictures[p] for p in range(num_pictures) if sum(x[p][k].solution_value() for k in range(num_knapsacks)) == 0]
+  leftover = [pictures[p] for p in range(num_pictures) if not any(x[p][k].solution_value() for k in range(num_knapsacks))]
 
   # Total time required to send all pictures
   if leftover:
