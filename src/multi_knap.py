@@ -43,20 +43,17 @@ def fail_with(message: str) -> NoReturn:
   print(message)
   exit(1)
 
-Input = tuple[list[int], list[tuple[int, int]]]
-
-def parse_blackout(s: str) -> tuple[int, int]:
-  [a, b] = s.split()
-  return (int(a), int(b))
+Blackout = tuple[int, int]
+Input = tuple[list[int], list[Blackout]]
 
 def parse_input(path: str) -> Input:
   with open(path, "r") as f:
     pictures = list(map(int, f.readline().split()))
-    blackouts = list(map(parse_blackout, f.readlines()))
+    blackouts = list(map(lambda s: tuple(map(int, s.split())), f.readlines()))
     return (pictures, blackouts)
 
 # Turn a list of blackouts into a list of knapsacks.
-def get_knapsacks(blackouts: list[tuple[int, int]]) -> list[int]:
+def get_knapsacks(blackouts: list[Blackout]) -> list[int]:
   return [blackouts[0][0]] + [start - end for ((_, end), (start, _)) in pairwise(blackouts)]
 
 Output = tuple[list[list[int]], int]
@@ -110,7 +107,7 @@ def solve(input: Input) -> Output:
   return (knaps + [leftover], total_time)
 
 def main() -> None:
-  [_, input_path] = argv
+  input_path = argv[1]
   input = parse_input(input_path)
   (pictures, total_time) = solve(input)
   print(pictures, total_time, sep="\n")
