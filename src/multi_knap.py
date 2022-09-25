@@ -88,7 +88,7 @@ def solve(input: Input) -> Output:
   obj = solver.Objective()
   for p in range(num_pictures):
     for k in range(num_knapsacks):
-      obj.SetCoefficient(x[p][k], pictures[p])
+      obj.SetCoefficient(x[p][k], pictures[p] * (num_knapsacks - k))
   obj.SetMaximization()
 
   status = solver.Solve()
