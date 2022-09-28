@@ -1,9 +1,7 @@
-# prerequisite: Python 3.10
+from itertools import pairwise
 from ortools.linear_solver import pywraplp # type: ignore
 from sys import argv
-from itertools import pairwise
 from typing import NoReturn
-
 
 # Algorithm overview:
 
@@ -52,19 +50,21 @@ Input = tuple[list[float], list[Blackout]]
 
 def parse_input(path: str) -> Input:
   with open(path, "r") as f:
-    amount_pictures = int(f.readline())
-    pictures = [float(f.readline()) for i in range(amount_pictures)]
-    amount_blackouts = int(f.readline())
-    blackouts = [tuple(map(float, f.readline().split(","))) for i in range(amount_blackouts)]
-    blackouts = list(map(lambda s: (s[0], s[0] + s[1]), blackouts))
-    blackouts.sort(key=lambda s: s[0])
+    num_pictures = int(f.readline())
+    pictures = [float(f.readline()) for _ in range(num_pictures)]
+
+    num_blackouts = int(f.readline())
+    blackouts = [tuple(map(float, f.readline().split(","))) for _ in range(num_blackouts)]
+    blackouts = list(sorted(map(lambda s: (s[0], s[0] + s[1]), blackouts)))
+
+    print("Blackouts:", blackouts)
     return (pictures, blackouts)
 
 # Turn a list of blackouts into a list of knapsacks.
 def get_knapsacks(blackouts: list[Blackout]) -> list[float]:
   return [blackouts[0][0]] + [start - end for ((_, end), (start, _)) in pairwise(blackouts)]
 
-Output = tuple[list[list[float]], float, list[tuple[float,float]]]
+Output = tuple[list[list[float]], float]
 
 def solve(input: Input) -> Output:
   (pictures, blackouts) = input
@@ -72,7 +72,7 @@ def solve(input: Input) -> Output:
 
   if not pictures or not blackouts:
     print("Trivial solution")
-    return ([pictures], sum(pictures), blackouts)
+    return ([pictures], sum(pictures))
 
   knapsacks = get_knapsacks(blackouts)
   num_knapsacks = len(knapsacks)
@@ -112,17 +112,15 @@ def solve(input: Input) -> Output:
     last_full_knapsack = max(k for k in range(num_knapsacks) if knaps[k])
     total_time = blackouts[last_full_knapsack - 1][1] + sum(knaps[last_full_knapsack])
 
-  return (knaps + [leftover], total_time, blackouts)
+  return (knaps + [leftover], total_time)
 
 def main() -> None:
-  #input_path = argv[1]
-  input_path = "../data/set5.txt"
+  input_path = argv[1]
   input = parse_input(input_path)
-  (pictures, total_time, blackouts) = solve(input)
-  print(pictures, total_time, blackouts, sep="\n")
+  (knapsacks, total_time) = solve(input)
 
-  print("Required output:")
-  print(total_time)
+  print("Knapsacks:", knapsacks)
+  print("Total time:", total_time)
 
 if __name__ == "__main__":
   main()
