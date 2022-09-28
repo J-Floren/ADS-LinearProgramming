@@ -56,7 +56,9 @@ def parse_input(path: str) -> Input:
     blackouts = [parse_blackout(f.readline()) for _ in range(num_blackouts)]
     blackouts.sort()
 
+    print("Pictures:", pictures)
     print("Blackouts:", blackouts)
+
     return (pictures, blackouts)
 
 # Turn a list of blackouts into a list of knapsacks.
@@ -78,6 +80,8 @@ def solve(input: Input) -> Output:
 
   knapsacks = get_knapsacks(pictures, blackouts)
   num_knapsacks = len(knapsacks)
+  print("Knapsacks:", knapsacks)
+  print()
 
   solver = pywraplp.Solver.CreateSolver("SCIP") or fail_with("SCIP solver unavailable")
 
@@ -116,9 +120,9 @@ def solve(input: Input) -> Output:
 def main() -> None:
   input_path = argv[1]
   input = parse_input(input_path)
-  (knapsacks, total_time) = solve(input)
+  (pictures, total_time) = solve(input)
 
-  print("Knapsacks:", knapsacks)
+  print("Pictures in order:", pictures)
   print("Total time:", total_time)
 
 if __name__ == "__main__":
