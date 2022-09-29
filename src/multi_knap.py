@@ -120,9 +120,9 @@ def solve(input: Input) -> Output:
 def main() -> None:
   input_path = argv[1]
   input = parse_input(input_path)
-  (pictures, total_time) = solve(input)
+  (knaps, total_time) = solve(input)
 
-  print("Pictures in order:", pictures)
+  print("Pictures in knapsacks:", knaps)
   print("Total time:", total_time)
 
 if __name__ == "__main__":
