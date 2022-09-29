@@ -96,14 +96,10 @@ def solve(input: Input) -> Output:
   for k in range(num_knapsacks):
     solver.Add(sum(x[p][k] * pictures[p] for p in range(num_pictures)) <= knapsacks[k])
 
-  # Objective: Maximize the length of pictures in each knapsack
-  c = 10
-  obj = solver.Objective()
-  for p in range(num_pictures):
-    for k in range(num_knapsacks):
-      obj.SetCoefficient(x[p][k], pictures[p] * c ** k)
-  obj.SetMinimization()
+  # Objective: Minimize the coefficients of each picture in each knapsack
+  solver.Minimize(solver.Sum(x[p][k] * pictures[p] * (k + 1) ** 2 for k in range(num_knapsacks) for p in range(num_pictures)))
 
+  # Run the solver
   status = solver.Solve()
   if status != pywraplp.Solver.OPTIMAL:
     fail_with("No optimal solution")
