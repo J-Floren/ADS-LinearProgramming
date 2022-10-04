@@ -15,6 +15,10 @@ def get_blackouts(knapsacks: list[float], decimals: int) -> list[float]:
   return blackouts
 
 def main() -> None:
+  if len(argv) != 9:
+    print(f"Usage: {argv[0]} Npics Lpics Hpics Nknaps Lknaps Hknaps Dpics Dknaps")
+    exit(1)
+
   num_pictures = int(argv[1])
   low_pictures = float(argv[2])
   high_pictures = float(argv[3])
