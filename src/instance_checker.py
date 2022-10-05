@@ -43,7 +43,7 @@ def fail_with(message: str) -> NoReturn:
 
 
 Blackout = tuple[float, float]
-Input = tuple[list[float], list[Blackout], list[float]]
+Input = tuple[list[float], list[Blackout]]
 
 
 def parse_blackout(line: str) -> Blackout:
@@ -51,7 +51,7 @@ def parse_blackout(line: str) -> Blackout:
     return start, start + duration
 
 
-def parse_input(path: str) -> Input:
+def parse_input(path: str) -> tuple[list[float], list[Blackout], float]:
     with open(path, "r") as f:
         num_pictures = int(f.readline())
         pictures = [float(f.readline()) for _ in range(num_pictures)]
@@ -60,13 +60,13 @@ def parse_input(path: str) -> Input:
         blackouts = [parse_blackout(f.readline()) for _ in range(num_blackouts)]
         blackouts.sort()
 
-        results = [float(f.readline()) for _ in range(num_pictures)]
+        expected_total_cost = float(f.readline())
 
         print("Pictures:", pictures)
         print("Blackouts:", blackouts)
-        print("Solution:", results)
+        print("ExpectedTotalCost:", expected_total_cost)
 
-        return pictures, blackouts, results
+        return pictures, blackouts, expected_total_cost
 
 
 # Turn a list of blackouts into a list of knapsacks.
@@ -81,7 +81,7 @@ Output = tuple[float, list[float]]
 
 
 def solve(parsed_input: Input) -> Output:
-    (pictures, blackouts, results) = parsed_input
+    (pictures, blackouts) = parsed_input
     num_pictures = len(pictures)
 
     if not pictures or not blackouts:
@@ -132,16 +132,17 @@ def solve(parsed_input: Input) -> Output:
     last_pic = max(times)
     total_time = last_pic + pictures[times.index(last_pic)]
 
-    return (total_time, times)
+    return total_time, times
 
 
 def main() -> None:
     input_path = argv[1]
-    parsed_input = parse_input(input_path)
-    (total_time, times) = solve(parsed_input)
+    (pictures, blackouts, expected_total_cost) = parse_input(input_path)
+    (total_time, times) = solve((pictures, blackouts))
 
     print("Total time:", total_time)
     print("Sending times:", times)
+    print("\nCorrect Instance:", total_time == expected_total_cost)
 
 
 if __name__ == "__main__":
