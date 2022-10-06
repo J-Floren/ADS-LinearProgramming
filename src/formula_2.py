@@ -64,10 +64,7 @@ def parse_input(path: str) -> Input:
 
 # Turn a list of blackouts into a list of knapsacks.
 def get_knapsacks(pictures: list[float], blackouts: list[Blackout]) -> list[float]:
-  return \
-    [blackouts[0][0]] \
-    + [start - end for ((_, end), (start, _)) in pairwise(blackouts)] \
-    + [sum(pictures)]
+  return [blackouts[0][0]] + [start - end for ((_, end), (start, _)) in pairwise(blackouts)] + [sum(pictures)]
 
 Output = tuple[list[list[float]], float]
 
@@ -86,8 +83,25 @@ def solve(input: Input) -> Output:
 
   solver = pywraplp.Solver.CreateSolver("SCIP") or fail_with("SCIP solver unavailable")
 
+  #
+  # DECISION VARIABLES
+  #
+
   # x[p][k] is 1 if picture `p` is in knapsack `k`
   x = [[solver.BoolVar(f"x[{p}, {k}]") for k in range(num_knapsacks)] for p in range(num_pictures)]
+
+  # c[k] if knapsack k is used
+  c = [solver.BoolVar(f"c[{k}]") for k in range(num_knapsacks)]
+
+  # l[k] if knapsack k is last knapsack
+  l = [solver.BoolVar(f"l[{k}]") for k in range(num_knapsacks)]
+
+  # same as x but only for the last knapsack
+  z = [[solver.BoolVar(f"z[{p}, {k}]") for k in range(num_knapsacks)] for p in range(num_pictures)]
+
+  #
+  # CONSTRAINTS
+  #
 
   # Constraint: Each picture is in exactly one knapsack
   for p in range(num_pictures):
@@ -97,8 +111,47 @@ def solve(input: Input) -> Output:
   for k in range(num_knapsacks):
     solver.Add(sum(x[p][k] * pictures[p] for p in range(num_pictures)) <= knapsacks[k])
 
+  # Constraint: Taking knapsacks from left, group the knapsacks by 1 first, then by  0
+  for k in range(1, num_knapsacks):
+    solver.Add((c[k] - c[k - 1]) <= 0)
+
+  # Constraint: All photos have to fit in used knapsacks
+  for k in range(1, num_knapsacks):
+    solver.Add(sum(x[p][k] - c[k] for p in range(num_pictures)) <= 0)
+
+  # l have to hold last knapsack position only. You can only have it on the position when k is 1
+  for k in range(num_knapsacks):
+    solver.Add(l[k] - c[k] <= 0)
+
+  # If you move by one and multiply it should be 0 (it should be on the position of rightmost 1)
+  for k in range(num_knapsacks - 1):
+    solver.Add(l[k] + c[k + 1] <= 1)
+
+  # There is just one last knapsack
+  solver.Add(sum(l[k] for k in range(num_knapsacks)) == 1)
+
+  # And set z properly (simulate logical operation (l[j] and x[i][j]))
+  for k in range(num_knapsacks):
+    for p in range(num_pictures):
+      solver.Add(1 - l[k] + z[p][k] <= 1)
+      solver.Add(1 - x[p][k] + z[p][k] <= 1)
+      solver.Add(x[p][k] + l[k] - z[p][k] <= 1)
+
+  #
+  # OBJECTIVE FUNCTION
+  #
+
+  knapsacks_used = []
+  for k in range(num_knapsacks - 1):
+    knapsacks_used.append(c[k + 1] * knapsacks[k])
+
+  photo_sizes_in_last_knapsack = []
+  for k in range(num_knapsacks):
+    for p in range(num_pictures):
+      photo_sizes_in_last_knapsack.append(z[p][k] * pictures[p])
+
   # Objective: Minimize the coefficients of each picture in each knapsack
-  solver.Minimize(solver.Sum(x[p][k] * pictures[p] * (k + 1) ** 2 for k in range(num_knapsacks) for p in range(num_pictures)))
+  solver.Minimize(solver.Sum(knapsacks_used) + solver.Sum(photo_sizes_in_last_knapsack))
 
   start = time.time()
   # Run the solver
@@ -110,6 +163,11 @@ def solve(input: Input) -> Output:
   # Compute list of pictures, grouped by their knapsack
   knaps = [[pictures[p] for p in range(num_pictures) if x[p][k].solution_value()] for k in range(num_knapsacks)]
 
+  for k in range(num_knapsacks):
+    print("Is used", c[k].name(), c[k].solution_value(), "  Is last", l[k].name(), l[k].solution_value())
+    for p in range(num_pictures):
+      print(z[p][k].name(), z[p][k].solution_value(), "  ", x[p][k].name(), x[p][k].solution_value())
+
   # Total time required to send all pictures
   last_full_knapsack = max(k for k in range(num_knapsacks) if knaps[k])
   total_time = blackouts[last_full_knapsack - 1][1] + sum(knaps[last_full_knapsack])
@@ -117,7 +175,7 @@ def solve(input: Input) -> Output:
   return (knaps, total_time)
 
 def main() -> None:
-  input_path = argv[1]
+  input_path = "../data/big.txt"
   input = parse_input(input_path)
   (knaps, total_time) = solve(input)
 
