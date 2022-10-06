@@ -1,4 +1,5 @@
-from more_itertools import pairwise
+#from more_itertools import pairwise
+from itertools import pairwise   # must have python 3.10 for this to work
 from ortools.linear_solver import pywraplp # type: ignore
 from sys import argv
 from typing import NoReturn

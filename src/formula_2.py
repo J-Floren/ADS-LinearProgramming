@@ -1,4 +1,5 @@
-from itertools import pairwise
+#from more_itertools import pairwise
+from itertools import pairwise   # must have python 3.10 for this to work
 from ortools.linear_solver import pywraplp # type: ignore
 from sys import argv
 from typing import NoReturn
@@ -66,15 +67,14 @@ def parse_input(path: str) -> Input:
 def get_knapsacks(pictures: list[float], blackouts: list[Blackout]) -> list[float]:
   return [blackouts[0][0]] + [start - end for ((_, end), (start, _)) in pairwise(blackouts)] + [sum(pictures)]
 
-Output = tuple[list[list[float]], float]
+Output = tuple[float, list[float]]
 
 def solve(input: Input) -> Output:
   (pictures, blackouts) = input
   num_pictures = len(pictures)
 
   if not pictures or not blackouts:
-    print("Trivial solution")
-    return ([pictures], sum(pictures))
+    fail_with("Trivial solution")
 
   knapsacks = get_knapsacks(pictures, blackouts)
   num_knapsacks = len(knapsacks)
@@ -161,26 +161,41 @@ def solve(input: Input) -> Output:
   print("Solve time:", time.time() - start, "seconds")
 
   # Compute list of pictures, grouped by their knapsack
-  knaps = [[pictures[p] for p in range(num_pictures) if x[p][k].solution_value()] for k in range(num_knapsacks)]
+  knaps = [[p for p in range(num_pictures) if x[p][k].solution_value()] for k in range(num_knapsacks)]
+  print("Pictures in knapsacks:", knaps)
 
+  '''
+  # Output all variables
   for k in range(num_knapsacks):
     print("Is used", c[k].name(), c[k].solution_value(), "  Is last", l[k].name(), l[k].solution_value())
     for p in range(num_pictures):
       print(z[p][k].name(), z[p][k].solution_value(), "  ", x[p][k].name(), x[p][k].solution_value())
+  '''
 
   # Total time required to send all pictures
-  last_full_knapsack = max(k for k in range(num_knapsacks) if knaps[k])
-  total_time = blackouts[last_full_knapsack - 1][1] + sum(knaps[last_full_knapsack])
+  times = [0.] * num_pictures
+  t = 0
 
-  return (knaps, total_time)
+  for i, knap in enumerate(knaps):
+    if i > 0:
+      t = blackouts[i - 1][1]
+
+    for p in knap:
+      times[p] = t
+      t += pictures[p]
+
+  last_pic = max(times)
+  total_time = last_pic + pictures[times.index(last_pic)]
+
+  return (total_time, times)
 
 def main() -> None:
-  input_path = "../data/big.txt"
+  input_path = "../assignment/bigger.txt"
   input = parse_input(input_path)
-  (knaps, total_time) = solve(input)
+  (total_time, times) = solve(input)
 
-  print("Pictures in knapsacks:", knaps)
   print("Total time:", total_time)
+  print("Sending times:", times)
 
 if __name__ == "__main__":
   main()
