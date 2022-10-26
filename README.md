@@ -4,7 +4,7 @@
 The final solution is located in the file *formula_2.py*. [Google OR tools](https://developers.google.com/optimization/introduction/overview) library has been used for the implementation,
 since the formulation is an ILP problem.\
 The script can be executed to solve an instance in two ways:
-* From the command line by passing the file path to the an instance text file as an argument
+* From the command line by passing the file path to an instance text file as an argument
 * From the IDE, but the variable **INSTANCE_PATH** must be edited to the respective path
 
 The script does the following steps:
