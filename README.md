@@ -3,6 +3,10 @@
 ## Offline algorithm
 The final solution is located in the file *formula_2.py*. [Google OR tools](https://developers.google.com/optimization/introduction/overview) library has been used for the implementation,
 since the formulation is an ILP problem.\
+The script can be executed to solve an instance in two ways:
+* From the command line by passing the file path to the an instance text file as an argument
+* From the IDE, but the variable **INSTANCE_PATH** must be edited to the respective path
+
 The script does the following steps:
 1. Parse the input from the instance text file and transform it into matrices understandable by the solver
 2. Declare the **Constant & Decision Variables** that the solver uses to find the optimum for the problem.

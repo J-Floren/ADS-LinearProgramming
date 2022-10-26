@@ -182,5 +182,7 @@ def main(input_path):
   return (solve_time, total_time, num_full_knaps, num_used_knaps, num_knapsacks)
 
 if __name__ == "__main__":
-  main(argv[1])
-  #main("../../experiment_instances/11_2.txt")
+  INSTANCE_PATH = argv[1]
+  #INSTANCE_PATH = "../../experiment_instances/11_2.txt"
+
+  main(INSTANCE_PATH)
