@@ -1,42 +1,10 @@
 #from more_itertools import pairwise
 from itertools import pairwise   # must have python 3.10 for this to work
+
 from ortools.linear_solver import pywraplp # type: ignore
 from sys import argv
 from typing import NoReturn
-import time
-
-# Algorithm overview:
-
-# Assuming we have K blackouts, we treat the problem as if we have K+1 knapsacks:
-# One knapsack for the interval before the first blackout, then knapsacks for the intervals between
-# each blackout, and one "infinite" knapsack _after_ the last blackout.
-# For ease of implementation, we assign the last knapsack capacity equal to the sum of all pictures.
-
-# Then, we solve the problem as if it were a "multiple knapsack problem", but with a twist:
-# The knapsacks have an exponentially increasing penalty, represented by a constant C (here C = 10).
-# e.g. first knapsack has penalty C, the second knapsack has penalty C², the third has penalty C³,
-# and so on.
-
-# Here's a visual diagram (Inputs are equivalent to those from data/set1.txt):
-
-# Input picture lengths: 2, 2, 3, 4, 1
-# Input blackouts: 3 5, 8 12
-# (i.e. the first blackout starts at 3, and the first "free" time after it is 5)
-
-# Timeline of blackouts (each dot represents a time unit, hashes represent blackouts):
-# 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20
-#  .  .  .  #  #  .  .  .  #  #  #  #  .  .  .  .  .  .  .  .  .
-
-# Timeline of pictures (each picture is delimited by [ and ]):
-# 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20
-#  .  .  .  #  #  .  .  .  #  #  #  #  .  .  .  .  .  .  .  .  .
-#  [  .  ]  #  #  [  ] []  #  #  #  #  [  ]  [  .  .  ]  .  .  .
-
-# The output will be:
-# [[3], [2, 1], [2, 4]]
-# 18
-
-# Reference: https://developers.google.com/optimization/bin/multiple_knapsack
+import timeit
 
 def fail_with(message: str) -> NoReturn:
   print(message)
@@ -58,20 +26,22 @@ def parse_input(path: str) -> Input:
     blackouts = [parse_blackout(f.readline()) for _ in range(num_blackouts)]
     blackouts.sort()
 
-    print("Pictures:", pictures)
-    print("Blackouts:", blackouts)
+    #print("Pictures:", pictures)
+    #print("Blackouts:", blackouts)
 
     return (pictures, blackouts)
 
 # Turn a list of blackouts into a list of knapsacks.
 def get_knapsacks(pictures: list[float], blackouts: list[Blackout]) -> list[float]:
-  return [blackouts[0][0]] + [start - end for ((_, end), (start, _)) in pairwise(blackouts)] + [sum(pictures)]
+  knaps = [blackouts[0][0]] + [start - end for ((_, end), (start, _)) in pairwise(blackouts)] + [sum(pictures)]
+  return [round(k, 3) for k in knaps]
 
-Output = tuple[float, list[float]]
+Output = tuple[float, list[float], float, int, int, int]
 
 def solve(input: Input) -> Output:
   (pictures, blackouts) = input
   num_pictures = len(pictures)
+  num_blackouts = len(blackouts)
 
   if not pictures or not blackouts:
     fail_with("Trivial solution")
@@ -79,7 +49,7 @@ def solve(input: Input) -> Output:
   knapsacks = get_knapsacks(pictures, blackouts)
   num_knapsacks = len(knapsacks)
   print("Knapsacks:", knapsacks)
-  print()
+  #print()
 
   solver = pywraplp.Solver.CreateSolver("SCIP") or fail_with("SCIP solver unavailable")
 
@@ -153,16 +123,29 @@ def solve(input: Input) -> Output:
   # Objective: Minimize the coefficients of each picture in each knapsack
   solver.Minimize(solver.Sum(knapsacks_used) + solver.Sum(photo_sizes_in_last_knapsack))
 
-  start = time.time()
+  start = timeit.default_timer()
   # Run the solver
   status = solver.Solve()
   if status != pywraplp.Solver.OPTIMAL:
     fail_with("No optimal solution")
-  print("Solve time:", time.time() - start, "seconds")
+  solve_time = timeit.default_timer() - start
+  #print("Solve time:", time.time() - start, "seconds")
 
   # Compute list of pictures, grouped by their knapsack
   knaps = [[p for p in range(num_pictures) if x[p][k].solution_value()] for k in range(num_knapsacks)]
   print("Pictures in knapsacks:", knaps)
+  filled = []
+
+  for i in range(len(knaps)):
+      diff = knapsacks[i] - sum(knaps[i])
+      if len(knaps[i]) == 0 or diff > 0:
+          filled.append(False)
+      else:
+          filled.append(True)
+
+  num_full_knaps = sum(1 for i in filled if i)
+  num_used_knaps = max([i for i in range(num_knapsacks) if len(knaps[i]) > 0])
+
 
   '''
   # Output all variables
@@ -187,15 +170,17 @@ def solve(input: Input) -> Output:
   last_pic = max(times)
   total_time = last_pic + pictures[times.index(last_pic)]
 
-  return (total_time, times)
+  return (total_time, times, solve_time, num_full_knaps, num_used_knaps, num_knapsacks)
 
-def main() -> None:
-  input_path = "../assignment/bigger.txt"
+def main(input_path):
   input = parse_input(input_path)
-  (total_time, times) = solve(input)
+  (total_time, times, solve_time, num_full_knaps, num_used_knaps, num_knapsacks) = solve(input)
 
-  print("Total time:", total_time)
-  print("Sending times:", times)
+  #print("Total time:", total_time)
+  #print("Sending times:", times)
+
+  return (solve_time, total_time, num_full_knaps, num_used_knaps, num_knapsacks)
 
 if __name__ == "__main__":
-  main()
+  main(argv[1])
+  #main("../../experiment_instances/11_2.txt")

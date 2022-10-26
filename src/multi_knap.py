@@ -3,7 +3,7 @@ from itertools import pairwise   # must have python 3.10 for this to work
 from ortools.linear_solver import pywraplp # type: ignore
 from sys import argv
 from typing import NoReturn
-import time
+import timeit
 
 # Algorithm overview:
 
@@ -58,8 +58,8 @@ def parse_input(path: str) -> Input:
     blackouts = [parse_blackout(f.readline()) for _ in range(num_blackouts)]
     blackouts.sort()
 
-    print("Pictures:", pictures)
-    print("Blackouts:", blackouts)
+    #print("Pictures:", pictures)
+    #print("Blackouts:", blackouts)
 
     return (pictures, blackouts)
 
@@ -70,7 +70,7 @@ def get_knapsacks(pictures: list[float], blackouts: list[Blackout]) -> list[floa
     + [start - end for ((_, end), (start, _)) in pairwise(blackouts)] \
     + [sum(pictures)]
 
-Output = tuple[float, list[float]]
+Output = tuple[float, list[float], float]
 
 def solve(input: Input) -> Output:
   (pictures, blackouts) = input
@@ -81,8 +81,8 @@ def solve(input: Input) -> Output:
 
   knapsacks = get_knapsacks(pictures, blackouts)
   num_knapsacks = len(knapsacks)
-  print("Knapsacks:", knapsacks)
-  print()
+  #print("Knapsacks:", knapsacks)
+  #print()
 
   solver = pywraplp.Solver.CreateSolver("SCIP") or fail_with("SCIP solver unavailable")
 
@@ -100,16 +100,16 @@ def solve(input: Input) -> Output:
   # Objective: Minimize the coefficients of each picture in each knapsack
   solver.Minimize(solver.Sum(x[p][k] * pictures[p] * (k + 1) ** 2 for k in range(num_knapsacks) for p in range(num_pictures)))
 
-  start = time.time()
+  start = timeit.default_timer()
   # Run the solver
   status = solver.Solve()
   if status != pywraplp.Solver.OPTIMAL:
     fail_with("No optimal solution")
-  print("Solve time:", time.time() - start, "seconds")
+  solve_time = timeit.default_timer() - start
 
   # Compute the output
   knaps = [[p for p in range(num_pictures) if x[p][k].solution_value()] for k in range(num_knapsacks)]
-  print("Pictures in knapsacks:", knaps)
+  #print("Pictures in knapsacks:", knaps)
 
   times = [0.] * num_pictures
   t = 0
@@ -125,15 +125,18 @@ def solve(input: Input) -> Output:
   last_pic = max(times)
   total_time = last_pic + pictures[times.index(last_pic)]
 
-  return (total_time, times)
+  return (total_time, times, solve_time)
 
-def main() -> None:
-  input_path = argv[1]
+def main(input_path):
+  #input_path = argv[1]
   input = parse_input(input_path)
-  (total_time, times) = solve(input)
+  (total_time, times, solve_time) = solve(input)
 
-  print("Total time:", total_time)
-  print("Sending times:", times)
+  #print("Total time:", total_time)
+  #print("Sending times:", times)
+
+  return (solve_time, total_time)
 
 if __name__ == "__main__":
-  main()
+  main(argv[1])
+  #main("../../experiment_instances/10_4.txt")

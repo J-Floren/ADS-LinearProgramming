@@ -6,7 +6,7 @@ def main():
     min_image_size = float(input("minimum image size:"))
     max_image_size = float(input("maximum image size:"))
     num_blackouts = int(input("number of blackouts"))
-    decimal_points = 0
+    decimal_points = 2
 
     items, indexes_images, indexes_blackouts = [], [], []
     C, i, previous_was_blackout = random.uniform(1.0, 2.0), 0, False
@@ -52,7 +52,7 @@ def main():
 
     INPUT = str(len(images)) + "\n" + "\n".join(images) + "\n" + str(len(blackouts)) + "\n" + "\n".join(blackouts)
     OUTPUT = str(round(optimum, 3)) + "\n" + "\n".join(output_image_start_positions)
-    print("\nINPUT:", INPUT, "\nOUTPUT:", OUTPUT, sep="\n")
+    print("\nINPUT:", INPUT, OUTPUT, sep="\n")
 
 
 if __name__ == "__main__":
